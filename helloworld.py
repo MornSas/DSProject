@@ -5,6 +5,7 @@ import pandas as pd
 import seaborn as sns
 import streamlit as st
 import geopandas as gpd
+import plotly.express as px
 from pandas import DataFrame
 from pandas.io.parsers import TextFileReader
 
@@ -15,7 +16,7 @@ with st.echo(code_location='below'):
 
 
     def print_hello(name="World"):
-        st.write(f"### Hello, {name}!")
+        st.write(f"### Hello, {name}! Hope you are happy too!")
 
 
     name = st.text_input("Your name", key="name", value="Anonymous")
@@ -52,6 +53,10 @@ with st.echo(code_location='below'):
             .mark_circle()
             .encode(x=alt.X("year", scale=alt.Scale(domain=(df['year'].min(), df['year'].max()))), y="Ladder score",
                     tooltip="Ladder score")
+            .properties(
+            width=600,
+            height=300
+        )
     )
     st.altair_chart(
         (
@@ -94,9 +99,50 @@ with st.echo(code_location='below'):
                    'Freedom to make life choices', 'Generosity', 'Perceptions of corruption']
     )
 
+    chart1 = (alt.Chart(df2).mark_circle().encode(
+        alt.X(factor, scale=alt.Scale(domain=(df2[factor].min(), df2[factor].max()))),
+        alt.Y('Ladder score', scale=alt.Scale(domain=(2, 9))),
+        alt.Color('Regional indicator'),
+        tooltip=[alt.Tooltip('Country name'),
+                 alt.Tooltip('Ladder score'),
+                 alt.Tooltip(factor)]
+    ).properties(
+        width=800,
+        height=500
+    ))
+    st.altair_chart(chart1.interactive())
+
     fig_1 = plt.figure(figsize=(10, 10))
     reg = sns.jointplot(data=df2, x=factor, y='Ladder score', kind='reg')
     st.pyplot(reg)
+
+    '''
+    ## Как этот фактор менялся до 2021 года
+    '''
+    if factor == 'Logged GDP per capita':
+        factor = 'Log GDP per capita'
+    elif factor == 'Healthy life expectancy':
+        factor = 'Healthy life expectancy at birth'
+
+    anifig = px.scatter(df.sort_values('year').reset_index(drop=True), x=factor, y='Ladder score', animation_frame='year',
+                        animation_group='Country name',
+                        hover_name='Country name', range_x=[df[factor].min(), df[factor].max()], range_y=[1, 9]
+                        )
+    st.plotly_chart(anifig)
+
+    '''
+    ## Изменения по стране, выбранной выше
+    '''
+
+    df_country = df[df['Country name'] == country]
+    anicountry = px.scatter(df_country.sort_values('year').reset_index(drop=True), x=factor, y='Ladder score',
+                        animation_group='Country name',
+                        animation_frame='year',
+                        hover_name='Country name', range_x=[df[factor].min(), df[factor].max()], range_y=[1, 9],
+                        color='Country name'
+                        )
+    st.plotly_chart(anicountry)
+
 
     '''
     ## Как уровень счастья выглядит на карте мира
@@ -115,21 +161,21 @@ with st.echo(code_location='below'):
     # Drop row for 'Antarctica'. It takes a lot of space in the map and is not of much use
     geo_df = geo_df.drop(geo_df.loc[geo_df['country'] == 'Antarctica'].index)
 
-    # Print the map
-    geo_df.plot(figsize=(20, 20), edgecolor='black', linewidth=1, color='lightblue')
-
     ###END FROM
 
     d = {'United Republic of Tanzania': 'Tanzania', 'Czechia': 'Czech Republic', 'Republic of Serbia': 'Serbia',
          'United States of America': 'United States', 'Hong Kong S.A.R.': 'Hong Kong S.A.R. of China',
-         'Taiwan': 'Taiwan Province of China', 'Palestine': 'Palestinian Territories'}
+         'Taiwan': 'Taiwan Province of China', 'Palestine': 'Palestinian Territories',
+         'Republic of the Congo': 'Congo (Brazzaville)', 'Greenland': 'Denmark'}
     geo_df = geo_df.replace({'country': d})
-    df_map = pd.merge(geo_df, df2, how='left', left_on='country', right_on='Country name')
-    unhap = df_map['Ladder score'].min()
-    hap = df_map['Ladder score'].max()
+    df_map = pd.merge(geo_df, df2, how='left', left_on='country', right_on='Country name').fillna(1)
     color = 'RdYlGn'
-    fig_map, ax_map = plt.subplots(figsize=(18, 12))
+    col = df_map['Ladder score']
+    df_data = df_map[col > 1]
+    df_nodata = df_map[col == 1]
+    fig_map, ax_map = plt.subplots(figsize=(24, 12))
     ax_map.axis = "off"
-    df_map.plot(column='Ladder score', ax=ax_map, edgecolor='black', linewidth=1, cmap=color, legend=True)
+    df_data.plot(column=df_data['Ladder score'], ax=ax_map, edgecolor='black', linewidth=1, cmap=color, legend=True)
+    df_nodata.plot(column=df_nodata['Ladder score'], ax=ax_map, edgecolor='black', linewidth=1, color='white')
     ax_map.set_title('Level of Happiness')
     st.pyplot(fig_map)
