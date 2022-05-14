@@ -28,9 +28,9 @@ with st.echo(code_location='below'):
         return pd.read_csv(path)
 
 
-    df = get_data(r"/Users/nikitakhomenko/Downloads/world-happiness-report.csv")
+    df = get_data('https://raw.githubusercontent.com/MornSas/DSProject/master/world-happiness-report.csv')
     df.rename(columns={'Life Ladder': 'Ladder score'}, inplace=True)
-    df2 = get_data(r"/Users/nikitakhomenko/Downloads/world-happiness-report-2021.csv")
+    df2 = get_data('https://raw.githubusercontent.com/MornSas/DSProject/master/world-happiness-report-2021.csv')
 
     """
     ## Выберите страну из списка, чтобы посмотреть данные об уровне счастья за 2021 год
