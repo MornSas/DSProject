@@ -150,7 +150,7 @@ with st.echo(code_location='below'):
 
     ###FROM:(https://www.relataly.com/visualize-covid-19-data-on-a-geographic-heat-maps/291/)
     # Setting the path to the shapefile
-    SHAPEFILE = '/Users/nikitakhomenko/Downloads/ne_10m_admin_0_countries/ne_10m_admin_0_countries.shp'
+    SHAPEFILE = 'https://github.com/MornSas/DSProject/blob/master/ne_10m_admin_0_countries.shp?raw=true'
 
     # Read shapefile using Geopandas
     geo_df = gpd.read_file(SHAPEFILE)[['ADMIN', 'ADM0_A3', 'geometry']]
